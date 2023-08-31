@@ -1,4 +1,5 @@
 replication <- read.csv(file = "data/HomeworkOneDataSet.csv")
+require(tidyverse)
 summary(replication)
 str(replication)
 
@@ -28,7 +29,7 @@ str(replication)
 # $ ResearchType               : int  3 4 4 2 2 NA 4 3 2 2 ...
 
 # Where respondents were from
-rev(sort(table(replication$Country)))
+# rev(sort(table(replication$Country)))
 
 # USA                   United Kingdom 
 # 130                               22 
@@ -41,13 +42,43 @@ rev(sort(table(replication$Country)))
 # Netherlands                   Japan 
 # 8                                8 
 
-rev(sort(table(round(((replication$Country)/length(replication$Country)), digits = 2)))
+# switched to dplyr rev(sort(table(round(((replication$Country)/length(replication$Country)), digits = 2)))
 
-library(dplyr)
+
+topCountries <-  replication %>%
+  select(Country) %>% 
+  group_by(Country) %>%
+  na.omit() %>% 
+  summarise(frequency = n()) %>%
+  arrange(desc(frequency))
+
+function(r)
+{
+  r + 1
+}
+
 replication %>%
-group_by(Country) %>%
-summarise(n = n()) %>%
-mutate(freq = n / sum(n))
+  select(WouldReccomend, HaveReplicated) %>%
+  na.omit() %>% 
+  group_by(WouldReccomend) %>%
+  mutate(if(WouldReccomend == 1 && HaveReplicated == 1){ReplicatedAndReccomended = 1}else{ReplicatedAndReccomended = 0})
+  # summarise(frequency = n()) %>%
+
+
+topCountries <- as.data.frame(topCountries)
+
+# Country        frequency
+# <chr>              <int>
+# 1 USA                  130
+# 2 United Kingdom        22
+# 3 Germany               21
+# 4 Brazil                20
+# 5 Canada                19
+# 6 China                 14
+# 7 Spain                 11
+# 8 Belgium                9
+# 9 Japan                  8
+# 10 Netherlands           8
 
 
 table(round(replication$Country)/length(replication$Country), digits = 2)
@@ -58,4 +89,18 @@ table(replication$WouldReccomend)/length(replication$WouldReccomend)
 # 1           2           No response 
 # 0.91150442  0.04424779  0.02359882
 
-table(replication$WantToReplicate)/length(replication$WantToReplicate)
+# table(replication$WantToReplicate)/length(replication$WantToReplicate)
+
+#dplyr is more intuitive
+
+starwars %>%
+  select(height, mass, gender, species) %>%
+  filter(species == "Human") %>%
+  na.omit() %>%
+  mutate(height = height / 100) %>%
+  mutate(bmi = mass / height^2) %>%
+  group_by(gender) %>% 
+  summarise(Average_BMI = mean(bmi))
+
+
+
