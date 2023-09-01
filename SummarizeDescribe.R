@@ -56,14 +56,22 @@ function(r)
 {
   r + 1
 }
+# How to add logical statements to mutate
+# https://stackoverflow.com/questions/24459752/can-dplyr-package-be-used-for-conditional-mutating
 
+
+library(scales)
 replication %>%
   select(WouldReccomend, HaveReplicated) %>%
-  na.omit() %>% 
-  group_by(WouldReccomend) %>%
-  mutate(if(WouldReccomend == 1 && HaveReplicated == 1){ReplicatedAndReccomended = 1}else{ReplicatedAndReccomended = 0})
-  # summarise(frequency = n()) %>%
+  mutate(ReplicatedAndReccomended = case_when(
+    WouldReccomend == 1 & HaveReplicated == 1 ~ 1,
+    WouldReccomend == 0 & HaveReplicated == 1 ~ 0)) %>% 
+  na.omit() %>%
+  summarise(PercentOfDoneAndReccomend = 
+              percent(round(mean(ReplicatedAndReccomended),digits=2)))
 
+# PercentOfDoneAndReccomend
+# 1                       98%
 
 topCountries <- as.data.frame(topCountries)
 
