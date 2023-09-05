@@ -3,6 +3,8 @@ require(tidyverse)
 summary(replication)
 str(replication)
 
+#I have renamed the variables so they are easier to work with
+
 # $ Participant                : int  1 3 4 5 7 8 9 10 11 12 ...
 # $ WouldReccomend             : chr  "2" "2" "1" "1" ...
 # $ LackOriginality            : int  55 51 19 0 40 40 83 89 38 100 ...
@@ -52,6 +54,8 @@ topCountries <-  replication %>%
   summarise(frequency = n()) %>%
   arrange(desc(frequency))
 
+# I want to use more functions and classes in R.  Any tips how to do so?
+
 function(r)
 {
   r + 1
@@ -70,8 +74,13 @@ replication %>%
   summarise(PercentOfDoneAndReccomend = 
               percent(round(mean(ReplicatedAndReccomended),digits=2)))
 
+# Almost all individuals who had completed a replication study would
+# reccomend it to others... kind of obvious.
+
 # PercentOfDoneAndReccomend
 # 1                       98%
+
+#dplyr makes working with data much easier.
 
 topCountries <- as.data.frame(topCountries)
 
@@ -89,8 +98,6 @@ topCountries <- as.data.frame(topCountries)
 # 10 Netherlands           8
 
 
-table(round(replication$Country)/length(replication$Country), digits = 2)
-
 # Amount of respondents who would recommend replicating research to others.
 table(replication$WouldReccomend)/length(replication$WouldReccomend)
 
@@ -101,6 +108,134 @@ table(replication$WouldReccomend)/length(replication$WouldReccomend)
 
 #dplyr is more intuitive
 
+publishOrPerish <- replication %>%
+  select(PublishPerYear) %>%
+  na.omit() %>% 
+  # summarize(AveragePerYear = mean(PublishPerYear)) %>% 
+  group_by(PublishPerYear) %>%
+  summarise(amount = n()) %>%
+  arrange(desc(amount))
+
+publishOrPerish
+
+
+# Of the sample, average number of papers published per person per year.
+# AveragePerYear
+# 1       1.711191
+
+#Subtract 50 from all values to centralize, then make responses to negative
+# statements negative so all agreement flows in the same direction.
+# Three or four were excluded due to neutrality.
+
+#Grouped by Zero Publications, Average or Below Publications and Above Average
+
+PerceptionCentralized <- replication %>%
+  select(c(LackOriginality, NotPriority, BuildReputation, VerifyResults, 
+           NegativePublisherEvaluation, ExpandResults, RelevantResearch, 
+           StrengthenDiscipline, ValuableToField, LackInnovation, PublishPerYear)) %>%
+  mutate(across(c("BuildReputation", "VerifyResults", "ExpandResults", 
+                  "RelevantResearch", "StrengthenDiscipline", 
+                  "ValuableToField", "LackOriginality", "NotPriority", 
+                  "NegativePublisherEvaluation", "LackInnovation"), 
+                ~replace(., is.na(.), 50))) %>%
+  na.omit() %>% #this omit removes any rows that have an NA in PublishPerYear
+  mutate(across(c("BuildReputation", "VerifyResults", "ExpandResults", 
+                  "RelevantResearch", "StrengthenDiscipline", 
+                  "ValuableToField",), ~ .x - 50)) %>% 
+  mutate(across(c("LackOriginality", "NotPriority", 
+                  "NegativePublisherEvaluation", "LackInnovation"),
+                ~ -(.x - 50))) %>%
+  mutate(OverallPerception = (rowSums(.))/10) %>%
+  mutate(publicationTier = case_when(
+    PublishPerYear == 0 ~ "NoPublications",
+    PublishPerYear != 0 & PublishPerYear <= 2 ~ "AverageOrBelow", 
+    PublishPerYear > 2 ~ "AboveAverage")) %>% 
+    group_by(publicationTier) #%>%
+  # summarize(ReplicationSentiment = mean(OverallPerception))
+
+# publicationTier ReplicationSentiment
+# <chr>                          <dbl>
+# 1 AboveAverage                    22.3
+# 2 AverageOrBelow                  19.7
+# 3 NoPublications                  19.8
+
+PerceptionCentralized  
+
+TierOverallPerception <- PerceptionCentralized %>%
+  select(publicationTier, OverallPerception)
+
+AnovaPublish <- aov(OverallPerception ~ publicationTier, data = TierOverallPerception)
+
+summary(AnovaPublish)
+
+#                   Df Sum Sq Mean Sq F value Pr(>F)
+# publicationTier   2    360   180.0   1.016  0.363
+# Residuals       274  48526   177.1       
+
+#Could not reject the null hypothesis.
+
+boxplot(OverallPerception ~ publicationTier, data = TierOverallPerception, 
+        ylab = "Overall Sentiment", xlab = "Publication Tiers")
+
+# library("ggpubr")
+# ggboxplot(TierOverallPerception, x = "publicationTier", y = "OverallPerception", 
+#           color = "group", palette = c("#00AFBB", "#E7B800", "#FC4E07"), 
+#           order = c("AboveAverage", "AverageOrBelow", "NoPublications"), 
+#           ylab = "Amount of Publications Per Year", xlab = "Overall Sentiment")
+
+###9/3/2023: mutate can be used together with across and concatenate
+###to apply functions to each cell in the desired variables.  rowSums() is great
+###for adding up a row.  I need to find a way to do na omission based on specific
+###columns.  
+
+#666666666666666666666666666666  Ran same code again with 6 gropus 1 way anove
+
+PerceptionCentralizedSixGroups <- replication %>%
+  select(c(LackOriginality, NotPriority, BuildReputation, VerifyResults, 
+           NegativePublisherEvaluation, ExpandResults, RelevantResearch, 
+           StrengthenDiscipline, ValuableToField, LackInnovation, PublishPerYear)) %>%
+  mutate(across(c("BuildReputation", "VerifyResults", "ExpandResults", 
+                  "RelevantResearch", "StrengthenDiscipline", 
+                  "ValuableToField", "LackOriginality", "NotPriority", 
+                  "NegativePublisherEvaluation", "LackInnovation"), 
+                ~replace(., is.na(.), 50))) %>%
+  na.omit() %>% #this omit removes any rows that have an NA in PublishPerYear
+  mutate(across(c("BuildReputation", "VerifyResults", "ExpandResults", 
+                  "RelevantResearch", "StrengthenDiscipline", 
+                  "ValuableToField",), ~ .x - 50)) %>% 
+  mutate(across(c("LackOriginality", "NotPriority", 
+                  "NegativePublisherEvaluation", "LackInnovation"),
+                ~ -(.x - 50))) %>%
+  mutate(OverallPerception = (rowSums(.))/10) %>%
+  group_by(PublishPerYear) #%>%
+
+# PublishPerYear ReplicationSentiment
+#               <int>             <dbl>
+# 1              0                 19.8
+# 2              1                 20.4
+# 3              2                 18.7
+# 4              3                 24.7
+# 5              4                 18.4
+# 6              5                 19.5
+
+SixGroupsOverallPerception <- PerceptionCentralizedSixGroups %>%
+  select(PublishPerYear, OverallPerception)
+
+AnovaPublishSixGroups <- aov(OverallPerception ~ PublishPerYear, data = SixGroupsOverallPerception)
+
+summary(AnovaPublishSixGroups)
+
+boxplot(OverallPerception ~ PublishPerYear, data = SixGroupsOverallPerception, 
+        ylab = "Overall Sentiment", xlab = "Number of Publications")
+
+
+
+# Df Sum Sq Mean Sq F value Pr(>F)
+# publicationTier   2    360   180.0   1.016  0.363
+# Residuals       274  48526   177.1     
+
+#The sample data that comes with some of these packages is great.
+
 starwars %>%
   select(height, mass, gender, species) %>%
   filter(species == "Human") %>%
@@ -109,6 +244,4 @@ starwars %>%
   mutate(bmi = mass / height^2) %>%
   group_by(gender) %>% 
   summarise(Average_BMI = mean(bmi))
-
-
 
