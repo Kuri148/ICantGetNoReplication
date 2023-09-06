@@ -3,6 +3,13 @@ require(tidyverse)
 summary(replication)
 str(replication)
 
+# There are four primary assumptions in ANOVA:
+#   
+# -The responses for each factor level have a normal population distribution.
+# -These distributions have the same variance.  (Ran a Lavene's Pr (>F)=.26 which is less than 1)
+# -The data are independent (Maybe a problem if he connected data at conference)
+# -No significant outliers in any cell of the design (outliers exist... fuck)
+
 #I have renamed the variables so they are easier to work with
 
 # $ Participant                : int  1 3 4 5 7 8 9 10 11 12 ...
@@ -161,6 +168,37 @@ PerceptionCentralized <- replication %>%
 
 PerceptionCentralized  
 
+library(car)
+
+# Using leveneTest()
+result = leveneTest(OverallPerception ~ publicationTier, PerceptionCentralized)
+
+# print the result
+print(result)
+
+WhatIsNormal <- PerceptionCentralized %>%
+  select(OverallPerception, publicationTier)
+
+shapiro.test(PerceptionCentralized$OverallPerception)
+# data:  PerceptionCentralized$OverallPerception
+# W = 0.97823, p-value = 0.00031
+#Overall is not normal....
+
+library(tidyr)
+spreadNormals <- spread(WhatIsNormal, publicationTier, OverallPerception)
+
+
+library(ggpubr)
+ggqqplot(PerceptionCentralized$OverallPerception)
+#This looks like it's not good for Overall
+
+# Levene's Test for Homogeneity of Variance (center = median)
+#        Df F value Pr(>F)
+# group   2  1.3398 0.2636
+#       274  
+
+#So, the variance is close enough to run an Anova
+
 TierOverallPerception <- PerceptionCentralized %>%
   select(publicationTier, OverallPerception)
 
@@ -235,6 +273,8 @@ boxplot(OverallPerception ~ PublishPerYear, data = SixGroupsOverallPerception,
 # Residuals       274  48526   177.1     
 
 #The sample data that comes with some of these packages is great.
+
+  
 
 starwars %>%
   select(height, mass, gender, species) %>%
