@@ -121,7 +121,7 @@ leveneresult1 = leveneTest(OverallPerception ~ HaveReplicated,  PerceptionHaveSl
 
 #----------------------------------------------------HaveReplicated Oneway Anova
 
-AnovaHaveReplicated <- aov(OverallPerception ~ HaveReplicated, 
+AnovaHaveReplicated <- aov(OverallPerception ~ factor(HaveReplicated), 
                           data = CentralizedPerceptionData)
 summary(AnovaHaveReplicated)
 #                 Df Sum Sq Mean Sq F value   Pr(>F)    
@@ -131,6 +131,8 @@ summary(AnovaHaveReplicated)
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
 # H0 Rejected .0001
+
+
 #----------------------------------------------------------HaveReplicated Graphs
 
 ggboxplot(PerceptionHaveSlice, x = "HaveReplicated", y = "OverallPerception")
@@ -186,7 +188,7 @@ summary(AnovaResearchType)
 
 #                       Df Sum Sq Mean Sq F value Pr(>F)   
 # factor(ResearchType)   4   2628   657.0   3.665 0.0062 **
-#   Residuals            313  56109   179.3                  
+#   Residuals           313  56109   179.3                  
 # ---
 #   Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 
