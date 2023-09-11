@@ -3,6 +3,19 @@ require(tidyverse)
 summary(replication)
 str(replication)
 
+matrix(sample(c(NA, 1:10), 100, replace = TRUE), 10)
+
+increaseOrDecrease <- replication %>%
+  select(IncreaseOrDecrease) %>%
+  replace(is.na(.), 0) %>% 
+  group_by(IncreaseOrDecrease) %>%
+  na.omit() %>%
+  summarize(frequency = n()) %>%
+  mutate(percentage = percent(frequency/sum(frequency)))
+
+increaseOrDecrease
+
+
 # There are four primary assumptions in ANOVA:
 #   
 # -The responses for each factor level have a normal population distribution.
@@ -61,6 +74,7 @@ topCountries <-  replication %>%
   summarise(frequency = n()) %>%
   arrange(desc(frequency))
 
+topCountries
 # I want to use more functions and classes in R.  Any tips how to do so?
 
 function(r)
